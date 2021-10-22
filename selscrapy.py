@@ -11,13 +11,15 @@ class SelScrapy():
     Scrap with selenium and headless chrome
     """
 
-    def __init__(self):
+    def __init__(self, headless=True):
         self.chrome_options = Options()
-        self.chrome_options.add_argument("--headless")
-        self.chrome_options.add_argument("--disable-gpu")
+
+        if headless == True:
+            self.chrome_options.add_argument("--headless")
+            self.chrome_options.add_argument("--disable-gpu")
 
         self.driver = webdriver.Chrome(executable_path="./chromedriver", options=self.chrome_options)
-        self.driver.set_page_load_timeout(3)
+        self.driver.set_page_load_timeout(5)
 
         self.get_page_num = 0
 
@@ -97,6 +99,7 @@ class SelScrapy():
         debugger.INFO("got content list")
 
         self.get_page_num = 0
+        # self.driver.close()
 
         return url_list
 
@@ -119,13 +122,32 @@ class SelScrapy():
         try:
             article_body = "  " + self.driver.find_element_by_class_name("sc-etwtAo").text.replace("\n\n", "\n")
         except NoSuchElementException:
-            debugger.DEBUG(url)
-            debugger.ERROR("No element {}".format("sc-etwtAo"))
+            # debugger.DEBUG(url)
+            debugger.WARNING("No element {}".format("sc-etwtAo"))
+            article_body_elm = ""
+            try:
+                article_body_elm = self.driver.find_element_by_class_name("articleBody")#.find_element_by_tag_name("div")
+            except NoSuchElementException:
+                debugger.WARNING("No elm {}".format("articleBody"))
+                try:
+                    article_body_elm = self.driver.find_element_by_class_name("article_body")
+                except NoSuchElementException:
+                    debugger.LOG(self.driver.page_source)
+                    debugger.ERROR("No elm {}".format("article_body"))
+                    return "None"
 
+            article_body_elm = article_body_elm.find_element_by_tag_name("div")
+            for p in article_body_elm.find_elements_by_tag_name("p"):
+                article_body += "  "
+                article_body += p.text
+                article_body += "\n"
+            debugger.INFO("got~")
+
+        # self.driver.close()
         return article_body
 
         # print(article_time)
         # print(article_body)
 
-    def close(self):
-        self.driver.close()
+    def quit(self):
+        self.driver.quit()
