@@ -14,3 +14,7 @@ In main.py, set the arguments of `get_new_content()`, and the search result of t
 Then, it will automatically get all the articles in the content.
 
 The content and all the articles will be saved in ./resources as json files.
+
+## TODO:
++ Implement getting the comments of each article
++ Implement the search limiting the date range and keywords

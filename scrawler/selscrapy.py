@@ -1,8 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import *
-import debugger
+from utils import debugger
 import time
 
 
@@ -18,7 +17,7 @@ class SelScrapy():
             self.chrome_options.add_argument("--headless")
             self.chrome_options.add_argument("--disable-gpu")
 
-        self.driver = webdriver.Chrome(executable_path="./chromedriver", options=self.chrome_options)
+        self.driver = webdriver.Chrome(executable_path="./scrawler/chromedriver", options=self.chrome_options)
         self.driver.set_page_load_timeout(5)
 
         self.get_page_num = 0
@@ -133,7 +132,7 @@ class SelScrapy():
                     article_body_elm = self.driver.find_element_by_class_name("article_body")
                 except NoSuchElementException:
                     debugger.LOG(self.driver.page_source)
-                    debugger.ERROR("No elm {}".format("article_body"))
+                    debugger.WARNING("No elm {}".format("article_body"))
                     return "None"
 
             article_body_elm = article_body_elm.find_element_by_tag_name("div")

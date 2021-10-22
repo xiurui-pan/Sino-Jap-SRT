@@ -1,14 +1,11 @@
-import random, core
-import debugger
+import random
+from utils import core
 import bs4.element
 from bs4 import BeautifulSoup
-from requests import get, post
+from requests import get
 
 intercept_cnt = 0
 news_content = []
-
-
-
 
 class RawScrapy():
     """
