@@ -1,5 +1,8 @@
 import random
-from utils import core
+
+import requests.exceptions
+
+from utils import core, debugger
 import bs4.element
 from bs4 import BeautifulSoup
 from requests import get
@@ -18,6 +21,29 @@ class RawScrapy():
         self.header = {
             'User-Agent': random.choice(self.ua_list),
             'Cookie': self.settings['cookie_yahoo']
+        }
+        self.comment_params = {
+            "origins": "https://news.yahoo.co.jp",
+            "sort": "lost_points",
+            "order": "desc",
+            "page": "1",
+            "type": "t",
+            "topic_id": "",
+            "space_id": "",
+            "content_id": "",
+            "full_page_url": "",
+            "comment_num": "10",
+            "ref": "",
+            "bkt": "",
+            "flt": 2,
+            "grp": "",
+            "opttype": "",
+            "disable_total_count": "",
+            "compact": "",
+            "compact_initial_view": "",
+            "display_author_banner": "off",
+            "mtestid": "",
+            "display_blurred_comment": "",
         }
 
     def get_page(self, url: str):
@@ -64,3 +90,66 @@ class RawScrapy():
             print(response_content)
 
         # response = get(url, headers=self.header)
+
+    def get_comment(self, url: str):
+
+        self.header['Referer'] = url
+        if url.find("articles") is -1:
+            debugger.WARNING("No comments!")
+            return ""
+        # print(url)
+        try:
+            response = get(url, headers=self.header)
+        except requests.exceptions.ProxyError:
+            debugger.ERROR("ConnectionResetError!")
+            return ""
+        soup = BeautifulSoup(response.content.decode('utf-8'), 'lxml')
+        # print(soup)
+
+        news_comment_plugin = soup.find(class_="news-comment-plugin")
+
+        try:
+            data_topic_id = news_comment_plugin["data-topic-id"]
+            data_space_id = news_comment_plugin["data-space-id"]
+            data_full_page_url = news_comment_plugin["data-full-page-url"]
+        except TypeError:
+            try:
+                data_topic_id = news_comment_plugin["data-topic-id"]
+                data_space_id = news_comment_plugin["data-space-id"]
+                data_full_page_url = news_comment_plugin["data-full-page-url"]
+            except TypeError:
+                debugger.WARNING("Zero comments!")
+                return ""
+
+        bkt = "art62t1"
+        mtestid = "mfn_15510=art62t1"
+        comment_base_url = "https://news.yahoo.co.jp/comment/plugin/v1/full/"
+        params = self.comment_params
+        params["topic_id"] = data_topic_id
+        params["space_id"] = data_space_id
+        params["full_page_url"] = data_full_page_url
+        params["bkt"] = bkt
+        params["mtestid"] = mtestid
+
+        response = get(comment_base_url, headers=self.header, params=params)
+        soup = BeautifulSoup(response.content.decode('utf-8'), 'lxml')
+
+        comment_list = soup.find(id="comment-list-item")
+        comments_ret = ""
+        # print(comment_list.contents[0])
+        if comment_list is None:
+            return ""
+
+        for comment_item in comment_list.children:
+            if type(comment_item) == bs4.element.NavigableString:
+                continue
+            # print(comment_item)
+            name = comment_item.find(class_="name").text.strip()
+            cmtBody = comment_item.find(class_="cmtBody").text.strip()
+            good = comment_item.find(class_="good").find(class_="userNum").text.strip()
+            bad = comment_item.find(class_="bad").find(class_="userNum").text.strip()
+            comments_ret += "%s vs %s:\n" % (good, bad)
+            comments_ret += "%s\n\n" % (cmtBody)
+
+        return comments_ret
+        # print(soup)

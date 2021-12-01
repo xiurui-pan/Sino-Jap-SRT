@@ -3,7 +3,7 @@ import pymysql as sql
 
 def load_ua():
     ua_list = []
-    with open("../config/ua.txt", "r") as f:
+    with open("./config/ua.txt", "r") as f:
         for line in f.readlines():
             if line:
                 if line[0] != '#':
@@ -16,6 +16,6 @@ def load_mysql():
     return sql.connect(**sql_login)
 
 def load_settings():
-    with open("../config/settings.json") as f:
+    with open("./config/settings.json") as f:
         settings = json.loads(f.read())
     return settings

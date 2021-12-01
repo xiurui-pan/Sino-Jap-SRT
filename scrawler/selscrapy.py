@@ -1,6 +1,9 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import *
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from utils import debugger
 import time
 
@@ -45,11 +48,14 @@ class SelScrapy():
         debugger.INFO("contents got by {:.2f}s.".format(time.time() - start_time))
 
         # get the number of results
-        nums0 = self.driver.find_element_by_class_name("sc-gtGrDH").text
+        # nums0 = self.driver.find_element_by_class_name("sc-gtGrDH").text
+        nums0 = self.driver.find_element_by_class_name("sc-bmlaxJ").text
+        # debugger.DEBUG(nums0)
         nums = ""
         for num in nums0:
             if num.isdigit():
                 nums += num
+        # print()
         nums = int(nums)
 
         debugger.INFO("got {} results".format(nums))
@@ -58,7 +64,8 @@ class SelScrapy():
         if getall == True:
             i = 1
             try:
-                mottomiru0 = self.driver.find_element_by_class_name("sc-emWXYZ")
+                # mottomiru0 = self.driver.find_element_by_class_name("sc-emWXYZ")
+                mottomiru0 = self.driver.find_element_by_class_name("sc-eydyIs")
                 mottomiru0.click()
                 # debugger.INFO("clicked {} times".format(i))
                 i = i + 1
@@ -147,6 +154,33 @@ class SelScrapy():
 
         # print(article_time)
         # print(article_body)
+
+    def get_comment(self, url: str) -> str:
+        # start_time = time.time()
+        # debugger.INFO("get_comment: {} by selenium started.".format(url))
+        # try:
+        #     self.driver.get(url + "/")
+        # except TimeoutException:
+        #     self.driver.execute_script("window.stop();")
+        # mottomiru = self.driver.find_element_by_id("loadMoreComments")
+        # mottomiru.click()
+        # print(self.driver.page_source)
+        # wait = WebDriverWait(self.driver, 5)
+        # comment_list = wait.until(EC.visibility_of_element_located((By.ID, ""comment-list-item"")))
+        # time.sleep(5)
+        # print(self.driver.page_source)
+        # comment_list = self.driver.find_element_by_id("comment-list-item")
+        # print(comment_list)
+        #
+        # for comment in comment_list:
+        #     body = comment.find_element_by_class_name("root")
+        #     name = body.find_element_by_class_name("name").find_element_by_class_name("rapidnofollow").text
+        #     cmtBody = body.find_element_by_class_name("cmtBody").text
+        #     print(cmtBody)
+        pass
+
+
+
 
     def quit(self):
         self.driver.quit()

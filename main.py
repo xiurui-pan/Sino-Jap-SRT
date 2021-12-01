@@ -3,7 +3,9 @@ import codecs, json
 import datetime
 from utils import debugger
 from scrawler import selscrapy
+from scrawler.rawscrapy import RawScrapy
 from db import sqldb
+import time
 
 
 def get_new_content(*args: str):
@@ -70,17 +72,46 @@ def write_to_db(filename: str, tablename: str):
 
     db.close()
 
+    
+def get_comments(filename: str):
+    path_contents = "./resources/" + filename
+    debugger.INFO("prepare to get comments for {}".format(filename))
+    fp = codecs.open(path_contents, 'r', 'utf-8')
+    contents = json.load(fp)
+    fp.close()
+    raw_scrapy = RawScrapy()
+    # content = contents[15]
+    # url = content["url"]
+    # comment = raw_scrapy.get_comment(url + "/comments")
+    # content["comment"] = comment
+    for (id, content) in enumerate(contents):
+        start_time = time.time()
+        url = content["url"]
+        debugger.INFO("getting {}th comments for {}".format(id, url))
+        comment = raw_scrapy.get_comment(url + "/comments")
+        content["comment"] = comment
+        debugger.INFO("got by {:.2f}s!".format(time.time() - start_time))
+    debugger.INFO("Getting comments finished!")
+    debugger.INFO("Begin writing to file")
+
+    json_all_filename = path_contents.replace("all", "all_plus")
+    fp = codecs.open(json_all_filename, 'w', 'utf-8')
+    fp.write(json.dumps(contents, indent=4, separators=(',', ': '), ensure_ascii=False))
+    debugger.INFO("written to json file: {}".format(json_all_filename))
+
 
 if __name__ == '__main__':
 
     debugger.INFO("Hello SRT!")
-    # sel_scrapy = selscrapy.SelScrapy(headless=True)
+    # sel_scrapy = selscrapy.SelScrapy(headless=False)
 
-    # get_new_content("五輪", "中国戦")
+    # get_new_content("五輪", "中国", "選手")
 
     # get_new_pages()
 
-    write_to_db("all中国_五輪_選手_2021-10-22-12_33_35.json", "yahoo_A")
+    get_comments("all五輪_中国_選手_2021-12-01-14_16_57.json")
+
+    # write_to_db("all中国_五輪_選手_2021-10-22-12_33_35.json", "yahoo_A")
 
     # sel_scrapy.quit()
 
