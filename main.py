@@ -8,7 +8,7 @@ from db import sqldb
 import time
 
 
-def get_new_content(*args: str):
+def get_new_content_for_yahoo(*args: str):
 
     global json_contents_filename
     global contents
@@ -31,7 +31,7 @@ def get_new_content(*args: str):
     fp.close()
 
 
-def get_new_pages():
+def get_new_pages_for_yahoo():
     # sel_scrapy.get_page_for_yahoo(contents[0]["url"])
     debugger.INFO("prepare to get {} pages".format(len(contents)))
     for index, article in enumerate(contents):
@@ -72,8 +72,22 @@ def write_to_db(filename: str, tablename: str):
 
     db.close()
 
-    
-def get_comments(filename: str):
+
+def update_db(filename: str, tablename: str):
+
+    db = sqldb.Sqldb()
+
+    debugger.INFO("begin updating {} to table {}".format(filename, tablename))
+    gen = db.generate("./resources/" + filename, tablename)
+    if gen is False:
+        debugger.ERROR("Writing to table failed")
+    else:
+        debugger.INFO("Writing to table succeeded.")
+
+    db.close()
+
+
+def get_comments_for_yahoo(filename: str):
     path_contents = "./resources/" + filename
     debugger.INFO("prepare to get comments for {}".format(filename))
     fp = codecs.open(path_contents, 'r', 'utf-8')
@@ -88,7 +102,7 @@ def get_comments(filename: str):
         start_time = time.time()
         url = content["url"]
         debugger.INFO("getting {}th comments for {}".format(id, url))
-        comment = raw_scrapy.get_comment(url + "/comments")
+        comment = raw_scrapy.get_comment_for_yahoo(url + "/comments")
         content["comment"] = comment
         debugger.INFO("got by {:.2f}s!".format(time.time() - start_time))
     debugger.INFO("Getting comments finished!")
@@ -100,16 +114,71 @@ def get_comments(filename: str):
     debugger.INFO("written to json file: {}".format(json_all_filename))
 
 
+def get_contents_for_yomiuri(*args: str):
+
+    rawscrapy = RawScrapy("yomiuri")
+    keywords = ""
+    for arg in args:
+        keywords += arg + '+'
+    url = "https://www.yomiuri.co.jp/web-search/?st=1&wo={}&ac=srch&ar=1".format(keywords)
+    debugger.INFO("Begin getting contents for Yomiuri")
+    contents = rawscrapy.get_contents_for_yomiuri(url)
+
+    json_contents_filename = "./resources/yomiuri"
+    for arg in args:
+        json_contents_filename += arg + '_'
+    json_contents_filename += str(datetime.datetime.now().strftime('%Y-%m-%d-%H_%M_%S'))
+    json_contents_filename += ".json"
+    fp = codecs.open(json_contents_filename, 'w', 'utf-8')
+    fp.write(json.dumps(contents, indent=4, separators=(',', ': '), ensure_ascii=False))
+    fp.close()
+    debugger.INFO("written to json file: {}".format(json_contents_filename))
+
+    # fp = codecs.open(json_contents_filename, 'r', 'utf-8')
+    # contents = json.load(fp, strict=False)
+    # debugger.INFO("loaded json file: {}".format(json_contents_filename))
+    # fp.close()
+
+
+def get_new_pages_for_yomiuri(filename: str):
+
+    fp = codecs.open("./resources/" + filename, 'r', 'utf-8')
+    contents = json.load(fp, strict=False)
+    fp.close()
+    debugger.INFO("loaded json file: {}".format(filename))
+    rawscrapy = RawScrapy("yomiuri")
+    # url = contents[1]["url"]
+    debugger.INFO("prepare to get {} pages for yomiuri".format(len(contents)))
+    for id, content in enumerate(contents):
+        url = content["url"]
+        debugger.INFO("begin to get page {}: {}".format(id, url))
+        body = rawscrapy.get_page_for_yomiuri(url)
+        debugger.INFO("page got!")
+        content["body"] = body
+
+    debugger.INFO("got pages finished!")
+
+    json_all_filename = filename.replace("yomiuri", "yomiuri_all")
+    fp = codecs.open("./resources/" + json_all_filename, 'w', 'utf-8')
+    fp.write(json.dumps(contents, indent=4, separators=(',', ': '), ensure_ascii=False))
+    debugger.INFO("written to json file: {}".format(json_all_filename))
+    fp.close()
+
+
 if __name__ == '__main__':
 
     debugger.INFO("Hello SRT!")
+
+    # get_contents_for_yomiuri("中国", "五輪", "選手")
+    get_new_pages_for_yomiuri("yomiuri中国_五輪_選手_2021-12-05-15_09_01.json")
+
     # sel_scrapy = selscrapy.SelScrapy(headless=False)
 
     # get_new_content("五輪", "中国", "選手")
 
     # get_new_pages()
 
-    get_comments("all五輪_中国_選手_2021-12-01-14_16_57.json")
+    # get_comments("all中国_五輪_選手_2021-10-22-12_33_35.json")
 
     # write_to_db("all中国_五輪_選手_2021-10-22-12_33_35.json", "yahoo_A")
 
